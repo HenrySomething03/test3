@@ -1,0 +1,597 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RE Investment AI Analytics</title>
+    <style>
+        :root {
+            --bg-app: #0f172a;
+            --bg-card: #1e293b;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --primary: #3b82f6;
+            --primary-hover: #2563eb;
+            --border: #334155;
+            --success: #10b981;
+            --code-bg: #020617;
+            --accent: #6366f1;
+        }
+
+        body {
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            background-color: var(--bg-app);
+            color: var(--text-main);
+            margin: 0;
+            padding: 20px;
+            height: 100vh;
+            box-sizing: border-box;
+            display: flex;
+            flex-direction: column;
+        }
+
+        header {
+            margin-bottom: 20px;
+            border-bottom: 1px solid var(--border);
+            padding-bottom: 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        h1 { margin: 0; font-size: 1.25rem; font-weight: 600; letter-spacing: -0.5px; }
+        .badge { background: var(--accent); font-size: 0.75rem; padding: 4px 8px; border-radius: 4px; font-weight: bold;}
+
+        /* Three Column Layout */
+        .workspace {
+            display: grid;
+            grid-template-columns: 340px 1fr 1fr; /* Slightly wider first col for new inputs */
+            gap: 20px;
+            flex: 1;
+            min-height: 0;
+        }
+
+        .panel {
+            background: var(--bg-card);
+            border-radius: 12px;
+            border: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        }
+
+        .panel-header {
+            padding: 12px 16px;
+            background: rgba(255,255,255,0.03);
+            font-weight: 600;
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--text-muted);
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .panel-content {
+            padding: 16px;
+            overflow-y: auto;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        /* Form Elements */
+        .form-group { margin-bottom: 10px; }
+        label { display: block; font-size: 0.8rem; color: var(--text-muted); margin-bottom: 6px; }
+        
+        input, select, textarea {
+            width: 100%;
+            background: var(--code-bg);
+            border: 1px solid var(--border);
+            color: var(--text-main);
+            padding: 10px;
+            border-radius: 6px;
+            font-family: inherit;
+            box-sizing: border-box;
+            transition: border-color 0.2s;
+        }
+        input:focus, textarea:focus, select:focus { 
+            outline: none; 
+            border-color: var(--primary); 
+            box-shadow: 0 0 0 1px var(--primary);
+        }
+
+        /* 3-column grid for rent stats */
+        .form-row-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; }
+        .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        
+        button {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+        button:hover { background: var(--primary-hover); transform: translateY(-1px); }
+        button:active { transform: translateY(0); }
+        
+        button.secondary { 
+            background: transparent; 
+            border: 1px solid var(--border);
+            color: var(--text-muted);
+            padding: 6px 12px;
+            font-size: 0.75rem;
+        }
+        button.secondary:hover { background: rgba(255,255,255,0.05); color: var(--text-main); }
+
+        /* Code Areas */
+        .code-block {
+            background: var(--code-bg);
+            color: #e2e8f0;
+            padding: 16px;
+            border-radius: 8px;
+            font-family: 'Menlo', 'Monaco', 'Courier New', monospace;
+            font-size: 0.85rem;
+            line-height: 1.5;
+            white-space: pre-wrap;
+            flex: 1;
+            resize: none;
+            border: 1px solid var(--border);
+        }
+        
+        .code-block::placeholder { color: #475569; }
+
+        /* Results Visualization */
+        .visual-preview {
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 16px;
+            background: #020617;
+            flex: 1;
+            overflow-y: auto;
+        }
+
+        .rent-card {
+            text-align: center;
+            padding: 20px;
+            border-bottom: 1px solid var(--border);
+            margin-bottom: 20px;
+        }
+        .rent-amount { font-size: 2.5rem; font-weight: 700; color: var(--success); }
+        .rent-label { font-size: 0.9rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; }
+
+        .preview-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.85rem;
+        }
+        .preview-table th { text-align: left; padding: 12px 8px; color: var(--text-muted); font-weight: 600; border-bottom: 1px solid var(--border); }
+        .preview-table td { padding: 12px 8px; border-bottom: 1px solid rgba(255,255,255,0.05); }
+        .preview-table tr:last-child td { border-bottom: none; }
+        
+        .yield-badge { 
+            background: rgba(16, 185, 129, 0.1); 
+            color: var(--success); 
+            padding: 2px 6px; 
+            border-radius: 4px; 
+            font-weight: 600; 
+        }
+        
+        .link-icon { text-decoration: none; color: var(--primary); }
+        .link-icon:hover { text-decoration: underline; }
+
+        /* Steps Indicator */
+        .mode-selector {
+            display: flex;
+            background: var(--bg-app);
+            padding: 4px;
+            border-radius: 8px;
+            margin-bottom: 16px;
+            border: 1px solid var(--border);
+        }
+        .mode-option {
+            flex: 1;
+            text-align: center;
+            padding: 8px;
+            font-size: 0.8rem;
+            cursor: pointer;
+            border-radius: 6px;
+            color: var(--text-muted);
+            transition: all 0.2s;
+        }
+        .mode-option.active {
+            background: var(--primary);
+            color: white;
+            font-weight: 600;
+        }
+        
+        .section-label {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--primary);
+            margin-top: 15px;
+            margin-bottom: 8px;
+            font-weight: 700;
+        }
+
+    </style>
+</head>
+<body>
+
+<header>
+    <div style="display:flex; align-items:center; gap: 12px;">
+        <div style="width: 24px; height: 24px; background: var(--primary); border-radius: 4px;"></div>
+        <div>
+            <h1>RE Investment AI Analytics V. 0.01</h1>
+            <span style="color: var(--text-muted); font-size: 0.8rem;">Rapid Prototype & Simulation Tool</span>
+        </div>
+    </div>
+    <div class="badge">Connected: Manual Mode</div>
+</header>
+
+<div class="workspace">
+    
+    <div class="panel">
+        <div class="panel-header">1. Parameters</div>
+        <div class="panel-content">
+            
+            <div class="mode-selector">
+                <div class="mode-option active" id="btnModeRent" onclick="setMode('rent')">Step 1: Rent</div>
+                <div class="mode-option" id="btnModeList" onclick="setMode('listings')">Step 2: Listings</div>
+            </div>
+
+            <div class="section-label">Property Criteria</div>
+            <div class="form-group">
+                <label>Target Area</label>
+                <input type="text" id="area" value="Monroe Township, NJ">
+            </div>
+            
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Min Price ($)</label>
+                    <input type="number" id="minPrice" value="200000">
+                </div>
+                <div class="form-group">
+                    <label>Max Price ($)</label>
+                    <input type="number" id="maxPrice" value="500000">
+                </div>
+            </div>
+            
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Min Sqft</label>
+                    <input type="number" id="minSqft" value="600">
+                </div>
+                <div class="form-group">
+                    <label>Max Sqft</label>
+                    <input type="number" id="maxSqft" value="1500">
+                </div>
+            </div>
+            
+            <div class="form-group">
+                <label>Bedrooms</label>
+                <input type="number" id="bedrooms" value="2">
+            </div>
+
+             <div class="form-group">
+                <label>Bathrooms</label>
+                <input type="number" id="Bathrooms" value="2">
+            </div>
+
+            <div class="section-label">Rent Analysis (Step 1 Result)</div>
+            <div class="form-row-3">
+                <div class="form-group">
+                    <label id="lblMinRent" style="opacity: 0.5">Rent Low</label>
+                    <input type="number" id="minRent" value="2200" disabled style="opacity: 0.5; cursor: not-allowed; color: #fbbf24;">
+                </div>
+                <div class="form-group">
+                    <label id="lblAvgRent" style="opacity: 0.5">Avg Rent</label>
+                    <input type="number" id="avgRent" value="2800" disabled style="opacity: 0.5; cursor: not-allowed; color: #10b981; font-weight:bold;">
+                </div>
+                <div class="form-group">
+                    <label id="lblMaxRent" style="opacity: 0.5">Rent High</label>
+                    <input type="number" id="maxRent" value="3400" disabled style="opacity: 0.5; cursor: not-allowed; color: #fbbf24;">
+                </div>
+            </div>
+
+            <div style="margin-top: auto;">
+                <button onclick="generatePrompt()">
+                    <span>Generate Prompt</span>
+                    <span>→</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div class="panel">
+        <div class="panel-header">
+            2. Prompt (Copy This)
+            <button class="secondary" onclick="copyToClipboard()">Copy Text</button>
+        </div>
+        <div class="panel-content">
+            <p style="font-size: 0.8rem; color: var(--text-muted); margin: 0;">
+                Paste this into Gemini or ChatGPT to simulate the backend API call.
+            </p>
+            <textarea id="promptOutput" class="code-block" readonly placeholder="Click 'Generate Prompt' to see the query here..."></textarea>
+        </div>
+    </div>
+
+    <div class="panel">
+        <div class="panel-header">3. Output (Paste Result)</div>
+        <div class="panel-content">
+            <div style="display:flex; gap: 10px; height: 150px;">
+                <textarea id="responseInput" class="code-block" style="border: 1px dashed var(--border);" placeholder="Paste the AI's response here..."></textarea>
+                <button onclick="simulateParsing()" style="width: 80px; flex-shrink:0;">Parse</button>
+            </div>
+            
+            <label>Visualized Data</label>
+            <div id="visualPreview" class="visual-preview">
+                <div style="height: 100%; display: flex; align-items: center; justify-content: center; color: var(--text-muted); flex-direction: column; gap: 10px;">
+                    <svg width="40" height="40" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+                    <span>Waiting for data...</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<script>
+    let currentMode = 'rent';
+
+    function setMode(mode) {
+        currentMode = mode;
+        
+        // UI Toggles
+        document.getElementById('btnModeRent').className = mode === 'rent' ? 'mode-option active' : 'mode-option';
+        document.getElementById('btnModeList').className = mode === 'listings' ? 'mode-option active' : 'mode-option';
+        
+        // Toggle Rent Inputs
+        const rentInputs = ['avgRent', 'minRent', 'maxRent'];
+        const rentLabels = ['lblAvgRent', 'lblMinRent', 'lblMaxRent'];
+        
+        rentInputs.forEach(id => {
+            const el = document.getElementById(id);
+            if (mode === 'listings') {
+                el.disabled = false;
+                el.style.opacity = '1';
+                el.style.cursor = 'text';
+            } else {
+                el.disabled = true;
+                el.style.opacity = '0.5';
+                el.style.cursor = 'not-allowed';
+            }
+        });
+
+        rentLabels.forEach(id => {
+            document.getElementById(id).style.opacity = mode === 'listings' ? '1' : '0.5';
+        });
+
+        generatePrompt(); // Auto regenerate if inputs exist
+    }
+
+    function generatePrompt() {
+        const area = document.getElementById('area').value;
+        const minP = document.getElementById('minPrice').value;
+        const maxP = document.getElementById('maxPrice').value;
+        const beds = document.getElementById('bedrooms').value;
+        const minS = document.getElementById('minSqft').value;
+        const maxS = document.getElementById('maxSqft').value;
+        const minR = document.getElementById('minRent').value;
+        const maxR = document.getElementById('maxRent').value;
+        const avgR = document.getElementById('avgRent').value;
+        const baths = document.getElementById('Bathrooms').value;
+
+        let prompt = "";
+
+        if (currentMode === 'rent') {
+                prompt = `You are an expert real estate data analyst. Using current market sources (Zillow, Apartments.com, RentCafe, Realtor, U.S. Census ACS, local MLS/listings sites), estimate monthly rent for properties matching these characteristics.
+
+- Area: ${area}
+- Bedrooms: around ${beds}
+- Purchase price range (context): ${minP}–${maxP} USD
+- Size: ${minS}–${maxS} square feet
+- Rent: Min: ${minR}, AVG: ${avgR}, Max: ${maxR} USD
+
+Return a STRICT JSON object (no fences) matching this schema, using numeric fields where appropriate:
+{
+    "area": "${area}",
+    "summary": "1–2 sentence summary",
+    "estimates": [ { "unit_type": "${beds}", "median_rent": 2500, "average_rent": "${avgR}", "rent_per_sqft": 2.5, "range_low": ${minR}, "range_high": ${maxR}, "sample_listings": [ { "title": "Example", "source": "Zillow or Apartments.Com", "price": ${avgR}, beds": ${beds}, "baths": ${baths}, "url": "https://example.com" } ], 
+    "method": "Short description of sources and calculation",
+    "sources": [{ "name":"Zillow, Apartments.Com", "url":"https://zillow.com", "https://apartments.com"}],
+    "caveats":"Short reliability notes"
+}
+
+If you cannot find enough listings, return best-effort values and indicate low confidence.`;
+        } else {
+            prompt = `Search the live web for REAL, CURRENT residential properties for sale in or very close to: ${area}
+
+Criteria:
+- Price: ${minP}–${maxP} USD
+- Bedrooms: ~${beds}
+- Size: ${minS}–${maxS} sq ft
+- Bathrooms: ~${baths}
+
+Return 5 to 10 listings in PLAIN TEXT bullets.
+CRITICAL: You MUST include a direct https:// URL at the end of every bullet in parentheses.
+
+Format each bullet exactly like this:
+- Address | Price | Beds/Baths | Sqft (https://example.com/listing)
+
+Do NOT use JSON. Do NOT use code blocks.`;
+        }
+
+        document.getElementById('promptOutput').value = prompt;
+    }
+
+    function simulateParsing() {
+        const input = document.getElementById('responseInput').value;
+        const preview = document.getElementById('visualPreview');
+
+        if (!input.trim()) {
+            preview.innerHTML = '<div style="color: #f87171; text-align: center; padding: 20px;">Please paste the text from the AI first.</div>';
+            return;
+        }
+
+        if (currentMode === 'rent') {
+            // RENT PARSER (JSON)
+            try {
+                let clean = input.replace(/```json/g, '').replace(/```/g, '').trim();
+                const data = JSON.parse(clean);
+
+                let avgRent = null, rangeLow = null, rangeHigh = null, sampleSize = null, rentPerSqft = null, confidence = null, summary = '';
+                let samplesHtml = '';
+
+                if (data.estimates && Array.isArray(data.estimates) && data.estimates.length) {
+                    const bedrooms = parseInt(document.getElementById('bedrooms').value || '0', 10);
+                    const mapUnitType = (b) => b === 0 ? 'studio' : (b === 1 ? '1BR' : `${b}BR`);
+                    const desiredType = mapUnitType(bedrooms);
+                    let estimate = data.estimates.find(e => String(e.unit_type).toLowerCase() === desiredType.toLowerCase()) || data.estimates[0];
+                    avgRent = estimate.average_rent || estimate.median_rent || null;
+                    rangeLow = estimate.range_low || null;
+                    rangeHigh = estimate.range_high || null;
+                    rentPerSqft = estimate.rent_per_sqft || null;
+                    confidence = estimate.confidence_score || null;
+                    summary = data.summary || '';
+
+                    if (Array.isArray(estimate.sample_listings)) {
+                        samplesHtml += '<table class="preview-table"><thead><tr><th>Listing</th><th>Price</th><th>Beds</th><th>Baths</th><th>Sqft</th></tr></thead><tbody>';
+                        estimate.sample_listings.forEach(s => {
+                            samplesHtml += `<tr><td>${s.title || s.source || 'Listing'}</td><td>$${(s.price || 0).toLocaleString ? (s.price || 0).toLocaleString() : (s.price || '')}</td><td>${s.beds || ''}</td><td>${s.baths || ''}</td><td>${s.sqft || ''}</td></tr>`;
+                        });
+                        samplesHtml += '</tbody></table>';
+                    }
+                } else if (data.average_rent_usd) {
+                    avgRent = data.average_rent_usd;
+                    rangeLow = data.min_rent_usd || null;
+                    rangeHigh = data.max_rent_usd || null;
+                    sampleSize = data.sample_size || null;
+                }
+
+                // AUTO-FILL INPUT BOXES
+                if (avgRent) document.getElementById('avgRent').value = Math.round(avgRent);
+                if (rangeLow) document.getElementById('minRent').value = Math.round(rangeLow);
+                if (rangeHigh) document.getElementById('maxRent').value = Math.round(rangeHigh);
+
+                let html = '';
+                if (avgRent) html += `<div class="rent-card"><div class="rent-amount">$${Number(avgRent).toLocaleString()}</div><div class="rent-label">Estimated Monthly Rent</div></div>`;
+                html += '<table class="preview-table">';
+                if (rangeLow !== null && rangeHigh !== null) html += `<tr><th>Range</th><td>$${Number(rangeLow).toLocaleString()} – $${Number(rangeHigh).toLocaleString()}</td></tr>`;
+                if (sampleSize) html += `<tr><th>Sample Size</th><td>${sampleSize} listings analyzed</td></tr>`;
+                if (rentPerSqft) html += `<tr><th>Rent per Sqft</th><td>$${rentPerSqft}</td></tr>`;
+                if (confidence) html += `<tr><th>Confidence</th><td>${confidence}/100</td></tr>`;
+                if (summary) html += `<tr><th>Summary</th><td>${summary}</td></tr>`;
+                html += '</table>';
+                if (samplesHtml) html += `<div style="margin-top: 10px;">${samplesHtml}</div>`;
+                html += `<div style="margin-top: 15px; text-align: center;"><button class="secondary" onclick="setMode('listings')">Rent saved. Go to Step 2 &rarr;</button></div>`;
+
+                preview.innerHTML = html;
+            } catch (e) {
+                preview.innerHTML = `<div style="color: #f87171; padding: 10px;"><strong>JSON Parse Error:</strong><br>${e.message}<br><br>Make sure the AI returned valid JSON.</div>`;
+            }
+        } else {
+            // LISTINGS PARSER
+            const avgRent = parseFloat(document.getElementById('avgRent').value) || 0;
+            const lines = input.split('\n');
+            const properties = [];
+
+            lines.forEach(line => {
+                line = line.trim();
+                if ((line.startsWith('-') || line.startsWith('*') || /^\d+\./.test(line)) && line.includes('$')) {
+                    const priceMatch = line.match(/\$[\d,]+(?:\.\d{2})?/);
+                    let price = 0;
+                    if (priceMatch) {
+                        price = parseFloat(priceMatch[0].replace(/[$,]/g, ''));
+                    }
+                    const urlMatch = line.match(/https?:\/\/[^\s)]+/);
+                    const url = urlMatch ? urlMatch[0] : '#';
+                    let address = line.replace(/^[-*]\s/, '').split('|')[0].split('$')[0].trim();
+                    const bedsMatch = line.match(/(\d+)\s?bd| (\d+)\s?bed/gi);
+                    const bathsMatch = line.match(/(\d+(?:\.\d+)?)\s?ba|baths/gi);
+                    const sqftMatch = line.match(/[\d,]+\s?(sqft|ft²|sq\. ft|sq ft)/i);
+                    const beds = bedsMatch ? (parseInt((bedsMatch[0]||'').replace(/\D/g,''),10) || '') : '';
+                    const baths = bathsMatch ? (parseFloat((bathsMatch[0]||'').replace(/[a-z\s]/gi,'')) || '') : '';
+                    const sqft = sqftMatch ? parseInt((sqftMatch[0]||'').replace(/[^\d]/g,''),10) : '';
+
+                    let yieldVal = 0;
+                    if (price > 0 && avgRent > 0) {
+                        yieldVal = ((avgRent * 12) / price) * 100;
+                    }
+
+                    if (price > 0) {
+                        properties.push({ address, price, yield: yieldVal, url, beds, baths, sqft });
+                    }
+                }
+            });
+
+            if (properties.length === 0) {
+                preview.innerHTML = '<div style="color: #fbbf24; padding: 20px; text-align: center;">No valid listings found.<br>Ensure the AI output uses bullets with "$" prices.</div>';
+                return;
+            }
+
+            properties.sort((a, b) => b.yield - a.yield);
+
+            let html = `
+                <div style="padding: 10px; border-bottom: 1px solid var(--border); margin-bottom: 10px; font-size: 0.8rem; color: var(--success);">
+                    Based on Rent: <strong>$${avgRent.toLocaleString()}</strong>
+                </div>
+                <table class="preview-table">
+                    <thead>
+                        <tr>
+                            <th>Address / Listing</th>
+                            <th>Price</th>
+                            <th>Beds</th>
+                            <th>Baths</th>
+                            <th>Sqft</th>
+                            <th>Gross Yield</th>
+                        </tr>
+                    </thead>
+                    <tbody>`;
+            
+            properties.forEach(p => {
+                    html += `
+                    <tr>
+                        <td>
+                            <div style="font-weight: 500;">${p.address}</div>
+                            ${p.url !== '#' ? `<a href="${p.url}" target="_blank" class="link-icon" style="font-size: 0.75rem;">View Listing ↗</a>` : ''}
+                        </td>
+                        <td>$${p.price.toLocaleString()}</td>
+                        <td>${p.beds || ''}</td>
+                        <td>${p.baths || ''}</td>
+                        <td>${p.sqft ? p.sqft.toLocaleString() : ''}</td>
+                        <td><span class="yield-badge">${p.yield.toFixed(2)}%</span></td>
+                    </tr>
+                `;
+            });
+            html += `</tbody></table>`;
+            preview.innerHTML = html;
+        }
+    }
+
+    function copyToClipboard() {
+        const copyText = document.getElementById("promptOutput");
+        copyText.select();
+        copyText.setSelectionRange(0, 99999); 
+        navigator.clipboard.writeText(copyText.value);
+        const btn = document.querySelector('button.secondary');
+        const originalText = btn.innerText;
+        btn.innerText = "Copied!";
+        setTimeout(() => btn.innerText = originalText, 2000);
+    }
+</script>
+
+</body>
+</html>
